@@ -38,3 +38,5 @@ tensorboard/
 # Environment specific
 .env
 *.env
+*.pyc
+__pycache__/
