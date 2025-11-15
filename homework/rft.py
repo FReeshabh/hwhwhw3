@@ -1,12 +1,11 @@
-import torch
-import random
-import math
 from transformers.trainer import Trainer
 from transformers.training_args import TrainingArguments
+
 from peft import LoraConfig, TaskType, get_peft_model
+
 from .base_llm import BaseLLM
 from .data import Dataset
-from .sft import TokenizedDataset, test_model # Re-use components from SFT
+from .sft import TokenizedDataset, test_model
 
 
 def load() -> BaseLLM:
@@ -24,22 +23,13 @@ def load() -> BaseLLM:
     return llm
 
 
-def format_example_rft(prompt: str, correct_answer: float, completion: str):
-    completion_text = completion.strip()
-    
-    if "<answer>" not in completion_text:
-        completion_text = f"{completion_text} <answer>{correct_answer:g}</answer>"
-        
-    return {"question": prompt, "answer": completion_text}
-
-
 def train_model(
     output_dir: str,
     **kwargs,
 ):
     base_model = BaseLLM()
 
-    lora_rank = kwargs.pop("lora_rank", 8) # Default to 8
+    lora_rank = kwargs.pop("lora_rank", 8)
     lora_alpha = kwargs.pop("lora_alpha", lora_rank * 4)
 
     config = LoraConfig(
@@ -61,27 +51,16 @@ def train_model(
     print("Trainable parameters:")
     model.print_trainable_parameters()
 
+    train_data = Dataset("rft") #the dataset just generated from datagen.py
     tokenizer = base_model.tokenizer
 
-    all_data = Dataset("rft") #the dataset just generated from datagen.py
-    data_list = all_data.data
-    random.shuffle(data_list) # Shuffle before splitting
+    def format_example(prompt: str, correct_answer: float, completion: str):
+        completion_text = completion.strip()
+        if "<answer>" not in completion_text:
+            completion_text = f"{completion_text} <answer>{correct_answer:g}</answer>"
+        return {"question": prompt, "answer": completion_text}
 
-    # Use 10% for evaluation
-    split_idx = math.floor(0.9 * len(data_list))
-    
-    train_list = data_list[:split_idx]
-    eval_list = data_list[split_idx:]
-
-    # Wrap the lists back into Dataset objects
-    train_data = Dataset("rft"); train_data.data = train_list
-    eval_data = Dataset("rft"); eval_data.data = eval_list
-    
-    print(f"RFT data split: {len(train_data)} training, {len(eval_data)} evaluation.")
-
-    tokenized_train_data = TokenizedDataset(tokenizer, train_data, format_example_rft)
-    tokenized_eval_data = TokenizedDataset(tokenizer, eval_data, format_example_rft)
-
+    tokenized_train_data = TokenizedDataset(tokenizer, train_data, format_example)
 
     training_args = TrainingArguments(
         output_dir=output_dir,
@@ -91,32 +70,20 @@ def train_model(
         num_train_epochs=kwargs.pop("num_train_epochs", 10),
         learning_rate=2e-4,
         weight_decay=0.01,
-        warmup_steps=20,
         gradient_checkpointing=True,
-        logging_steps=10,
-        
         save_strategy="epoch",
-        evaluation_strategy="epoch", 
-        load_best_model_at_end=True, 
-        metric_for_best_model="eval_loss",
-        greater_is_better=False,          
-        save_total_limit=2,          
-        
-        **kwargs, 
+        **kwargs,
     )
 
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=tokenized_train_data,
-        eval_dataset=tokenized_eval_data, # Pass in the eval dataset
     )
 
-    trainer.train(resume_from_checkpoint=kwargs.get("resume_from_checkpoint", None))
-    
+    trainer.train()
     model.save_pretrained(output_dir)
-    print(f"Best RFT model saved to {output_dir}")
-    
+    print(f"Model saved to {output_dir}")
     test_model(output_dir)
 
 
