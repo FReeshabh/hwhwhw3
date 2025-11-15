@@ -130,7 +130,7 @@ def train_model(
         
         logging_steps=10,
         save_strategy="epoch", # Save at the end of each epoch
-        load_best_model_at_end=False,
+        load_best_model_at_end=True,
     )
     trainer = Trainer(
         model=model,
