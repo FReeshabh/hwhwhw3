@@ -91,7 +91,7 @@ def train_model(
     baseModel = BaseLLM()
     config = LoraConfig(
         r=16,
-        lora_alpha=64, # 4 * r
+        lora_alpha=16*4, # 4 * r
         target_modules="all-linear",
         bias="none", 
         task_type=TaskType.CAUSAL_LM,

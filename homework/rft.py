@@ -29,7 +29,7 @@ def train_model(
 ):
     base_model = BaseLLM()
 
-    lora_rank = kwargs.pop("lora_rank", 32)
+    lora_rank = kwargs.pop("lora_rank", 16)
     lora_alpha = kwargs.pop("lora_alpha", lora_rank * 4)
 
     config = LoraConfig(
