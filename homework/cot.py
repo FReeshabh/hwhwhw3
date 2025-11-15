@@ -7,12 +7,13 @@ class CoTModel(BaseLLM):
         Take a question and convert it into a chat template. The LLM will likely answer much
         better if you provide a chat template. self.tokenizer.apply_chat_template can help here
         """
-
         system_prompt = (
             "You are a helpful assistant for unit conversions. Be concise. "
             "Think step-by-step and then provide the final numerical answer "
             "enclosed in <answer></answer> tags."
         )
+
+# Example 1: m -> km (division)
         user_1 = "How many kilometers are in 2500 meters?"
         asst_1 = (
             "1. 1000 meters = 1 kilometer.\n"
@@ -20,6 +21,7 @@ class CoTModel(BaseLLM):
             "<answer>2.5</answer>"
         )
 
+        # Example 2: ml -> l (division, different units)
         user_2 = "How many liters are in 800 milliliters?"
         asst_2 = (
             "1. 1000 milliliters = 1 liter.\n"
@@ -27,6 +29,7 @@ class CoTModel(BaseLLM):
             "<answer>0.8</answer>"
         )
 
+        # Example 3: kg -> g (multiplication)
         user_3 = "How many grams are in 2kg?"
         asst_3 = (
             "1. 1 kilogram = 1000 grams.\n"
@@ -43,18 +46,24 @@ class CoTModel(BaseLLM):
         chat_messages = [
             {"role": "system", "content": system_prompt},
             
+            # Example 1
             {"role": "user", "content": user_1},
             {"role": "assistant", "content": asst_1},
             
+            # Example 2
             {"role": "user", "content": user_2},
             {"role": "assistant", "content": asst_2},
             
+            # Example 3
             {"role": "user", "content": user_3},
             {"role": "assistant", "content": asst_3},
 
             {"role": "user", "content": user_4},
             {"role": "assistant", "content": asst_4},
+
             
+            
+            # The *actual* question from the user
             {"role": "user", "content": question}
         ]
 
@@ -63,6 +72,7 @@ class CoTModel(BaseLLM):
             tokenize=False,
             add_generation_prompt=True
         )
+
 
 def load() -> CoTModel:
     return CoTModel()

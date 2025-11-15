@@ -158,6 +158,10 @@ class BaseLLM:
                 for i in range(0, len(decoded_outputs), n_return)
             ]
 
+
+
+        
+
     def answer(self, *questions) -> list[float]:
         """
         Answer questions given as individual string arguments.
