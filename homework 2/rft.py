@@ -29,7 +29,7 @@ def train_model(
 ):
     base_model = BaseLLM()
 
-    lora_rank = kwargs.pop("lora_rank", 24)
+    lora_rank = kwargs.pop("lora_rank", 16)
     lora_alpha = kwargs.pop("lora_alpha", lora_rank * 4)
 
     config = LoraConfig(
@@ -67,9 +67,10 @@ def train_model(
         logging_dir=output_dir,
         report_to="tensorboard",
         per_device_train_batch_size=32,
-        num_train_epochs=kwargs.pop("num_train_epochs", 10),
-        learning_rate=2e-4,
+        num_train_epochs=kwargs.pop("num_train_epochs", 5),
+        learning_rate=3e-4,
         weight_decay=0.01,
+        warmup_steps=20,
         gradient_checkpointing=True,
         save_strategy="epoch",
         load_best_model_at_end=True,
